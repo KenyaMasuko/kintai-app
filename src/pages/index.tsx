@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 
 //ログインページ
 const Home: NextPage = () => {
-	return <div>this is login page</div>;
+	return <h1 className="text-3xl font-bold underline">Hello world!</h1>;
 };
 
 export default Home;
