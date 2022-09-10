@@ -1,44 +1,104 @@
 import { Button, Container, Group, List } from "@mantine/core";
-import { signOut, useSession } from "next-auth/react";
+import { getSession, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import React from "react";
+import { FormEvent, Fragment, useEffect, useState } from "react";
 import { Calender } from "src/components/Calender";
 import { MainLayout } from "src/components/MainLayout";
 import { TimeButton } from "src/components/TimeButton";
 import ContextWrapper from "src/context/ContextWrapper";
 import { FiLogIn } from "react-icons/fi";
+import axios from "axios";
+import { endpoint } from "src/utils/endpoint";
+import { NextPage } from "next";
+import dayjs from "dayjs";
 
-const UserPage = (props: Promise<any>) => {
+type Props = {
+	data: {
+		attend_leave: 0 | 1 | 2;
+	};
+};
+
+const UserPage: NextPage<Props> = (props) => {
+	console.log(props);
+	const [workState, setWorkState]: [number, any] = useState(
+		props.data?.attend_leave
+	);
+
 	const router = useRouter();
-	const { data } = useSession();
+	const { data: session } = useSession();
 	const { userName } = router.query;
 
-	console.log(data);
+	const token = session?.accessToken;
+
+	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		console.log("hello");
+
+		setWorkState((prev: number) => Number(!prev));
+		console.log(workState);
+
+		const { data } = await axios({
+			method: "post",
+			url: `${endpoint}/attendance/registration`,
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			data: {
+				button_type: workState,
+				date: String(dayjs().format("YYYY-MM-DD")),
+				time: String(dayjs().format("HH:mm")),
+			},
+		});
+
+		console.log(data);
+	};
 
 	return (
 		<>
 			<header className="fixed bg-white">
 				<nav>
 					<List listStyleType="none">
-						<List.Item>ユーザー名（部署）</List.Item>
-						<List.Item onClick={() => signOut()}>
+						<List.Item>{session?.user?.name}</List.Item>
+						<List.Item className="cursor-pointer" onClick={() => signOut()}>
 							ログアウト
 							<FiLogIn />
 						</List.Item>
 					</List>
 				</nav>
 			</header>
-			<MainLayout title={`${userName}のページ`}>
+			<MainLayout title={`${session?.user?.name}のページ`}>
 				<Container className="bg-white" size={400} px="xs">
-					<div className="space-y-4 py-3 mx-auto">
+					<form onSubmit={handleSubmit} className="space-y-4 py-3 mx-auto">
 						<Group spacing={4} className="flex-col">
-							<TimeButton />
+							<TimeButton user={session?.user?.name} />
 						</Group>
 						<Group position="center">
-							<Button className="hover:opacity-70">出勤</Button>
-							<Button disabled>退勤</Button>
+							{workState === 0 && (
+								<Fragment>
+									<Button type="submit" className="hover:opacity-70">
+										出勤
+									</Button>
+									<Button disabled>退勤</Button>
+								</Fragment>
+							)}
+							{workState === 1 && (
+								<Fragment>
+									<Button disabled>出勤</Button>
+									<Button type="submit" className="hover:opacity-70">
+										退勤
+									</Button>
+								</Fragment>
+							)}
+							{workState === 2 && (
+								<Fragment>
+									<Button disabled>出勤</Button>
+									<Button disabled>退勤</Button>
+								</Fragment>
+							)}
 						</Group>
-					</div>
+					</form>
 				</Container>
 				<Container className="bg-white mt" size="md">
 					<div className="bg-white mt-10 py-12 px-14">
@@ -52,47 +112,37 @@ const UserPage = (props: Promise<any>) => {
 	);
 };
 
-export const getServerSideProps = async () => {
-	// const data = {
-	// 	email: "sugitani@ei-shin.com",
-	// 	password: "pa123456",
-	// };
-	try {
-		// const data = {
-		// 	email: "sugitani@ei-shin.com",
-		// 	password: "pa123456",
-		// };
-		const data = {
-			user_id: 1,
-			button_type: 0,
-			date: "2017-01-01",
-			time: "12:30",
-		};
-		const res = await fetch(
-			"https://956b-2409-11-4260-1800-9d51-59e8-7166-a57b.jp.ngrok.io/api/attendance/registration",
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: "Bearer 3|PXRndh79lUAJODqCOGNPFi31XbdGe9tM3O0Zp9W4",
-				},
-				body: JSON.stringify(data),
-			}
-		);
-		console.log("~~getServerSideProps~~");
-		console.log(res);
+export const getServerSideProps = async (context: any) => {
+	const session = await getSession(context);
+	if (!session?.accessToken) {
+		console.log("エラーが発生しました");
+		signOut();
 
-		const json = await res.json();
-
-		return {
-			props: { json },
-		};
-	} catch (error) {
-		console.log(error);
 		return {
 			props: {},
 		};
 	}
+
+	const token = session?.accessToken;
+	const today = dayjs().format("YYYY-MM-DD");
+
+	const { data } = await axios({
+		method: "get",
+		url: `${endpoint}/attendance/home`,
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${token}`,
+		},
+		data: {
+			date: today,
+		},
+	});
+
+	// console.log(data);
+
+	return {
+		props: { data },
+	};
 };
 
 export default UserPage;

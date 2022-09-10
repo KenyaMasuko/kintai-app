@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { UserSignIn } from "src/utils/userSignIn";
+import { signOut } from "next-auth/react";
+import { UserSignIn } from "src/hook/userSignIn";
 
 export default NextAuth({
 	providers: [
@@ -23,22 +24,25 @@ export default NextAuth({
 
 				// APIのpostにて、ユーザーテーブルからログインユーザデータを取得してくる
 				// postSigninUserメソッドは別途定義している(axiosを使用）
-				const res = await UserSignIn(postData);
+				const res: any = await UserSignIn(postData);
 				console.log("bye");
 
-				if (res.data.messages !== "OK") {
-					// throw new Error(res);
-					console.log("こんにちは");
+				if (res.statusText !== "OK") {
+					console.log("~~status Error~~");
 
+					// throw new Error(res);
 					return null;
 				} else {
-					console.log("こんばんわ");
+					console.log("~~status ok~~");
 
-					const user = {
-						name: res.data[0].shimei,
-						email: res.data[0].user_code,
+					const token = {
+						accessToken: res.data.access_token,
+						tokenType: res.data.token_type,
+						email: credentials?.email,
+						name: res.data.name,
 					};
-					return user;
+
+					return token;
 				}
 			},
 		}),
@@ -49,7 +53,7 @@ export default NextAuth({
 			if (account && user) {
 				return {
 					...token,
-					accessToken: user.token,
+					accessToken: user.accessToken,
 					refreshToken: user.refreshToken,
 				};
 			}
@@ -57,6 +61,9 @@ export default NextAuth({
 			return token;
 		},
 		async session({ session, token }) {
+			console.log("~~this is session ~~");
+			signOut();
+
 			session.accessToken = token.accessToken;
 			session.refreshToken = token.refreshToken;
 			session.accessTokenExpires = token.accessTokenExpires;
@@ -68,8 +75,8 @@ export default NextAuth({
 	// サインイン・サインアウトで飛ぶカスタムログインページを指定
 	// サインアウト時に、”Are you sure you want to sign out?”と聞かれるページを挟むのをスキップする
 	pages: {
-		signIn: "/login",
-		signOut: "/login",
+		signIn: "/",
+		signOut: "/",
 	},
 	// Enable debug messages in the console if you are having problems
 	debug: process.env.NODE_ENV === "development",
