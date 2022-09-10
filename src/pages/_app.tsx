@@ -18,7 +18,7 @@ type AppPropsWithLayout = AppProps & {
 export default function App({
 	Component,
 	// @ts-ignore
-	pageProps: { session, ...pageProps },
+	pageProps: { ...pageProps },
 	router,
 }: AppPropsWithLayout) {
 	// useEffect(() => {
@@ -47,9 +47,7 @@ export default function App({
 					colorScheme: "light",
 				}}
 			>
-				<SessionProvider session={session}>
-					<Component {...pageProps} />
-				</SessionProvider>
+				<Component {...pageProps} />
 			</MantineProvider>
 		</>
 	);
