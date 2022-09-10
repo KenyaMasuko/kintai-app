@@ -1,5 +1,5 @@
 import axios from "axios";
-import { endpoint } from "./endpoint";
+import { endpoint } from "../utils/endpoint";
 
 type LoginProps = {
 	email: string | undefined;
@@ -8,7 +8,7 @@ type LoginProps = {
 
 export const UserSignIn = async ({ email, password }: LoginProps) => {
 	return await axios({
-		method: `post`,
+		method: "post",
 		url: `${endpoint}/login`,
 		headers: {
 			"Content-Type": "application/json",

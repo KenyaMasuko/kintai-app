@@ -21,13 +21,13 @@ export default function App({
 	pageProps: { session, ...pageProps },
 	router,
 }: AppPropsWithLayout) {
-	// useEffect(() => {
-	// 	// ここに全ページ共通で行う処理
-	// 	router.push("/login");
-	// }, []);
+	useEffect(() => {
+		// ここに全ページ共通で行う処理
+		router.push("/");
+	}, []);
 
 	// todo ユーザーのログイン状態を判定する
-	//userの状態によって処理を分ける
+
 	// todo レンダリング時にバリデーションを実行
 
 	return (
