@@ -2,12 +2,32 @@ import "../styles/globals.css";
 import { AppProps } from "next/app";
 import Head from "next/head";
 import { MantineProvider } from "@mantine/core";
+import { ReactElement, ReactNode, useEffect } from "react";
+import { useRouter } from "next/router";
+import { SessionProvider } from "next-auth/react";
+import { NextPage } from "next";
 
-export default function App(props: AppProps) {
-	const { Component, pageProps } = props;
+type NextPageWithLayout = NextPage & {
+	getLayout?: (page: ReactElement) => ReactNode;
+};
+
+type AppPropsWithLayout = AppProps & {
+	Component: NextPageWithLayout;
+};
+
+export default function App({
+	Component,
+	// @ts-ignore
+	pageProps: { session, ...pageProps },
+	router,
+}: AppPropsWithLayout) {
+	// useEffect(() => {
+	// 	// ここに全ページ共通で行う処理
+	// 	router.push("/login");
+	// }, []);
 
 	// todo ユーザーのログイン状態を判定する
-
+	//userの状態によって処理を分ける
 	// todo レンダリング時にバリデーションを実行
 
 	return (
@@ -27,7 +47,9 @@ export default function App(props: AppProps) {
 					colorScheme: "light",
 				}}
 			>
-				<Component {...pageProps} />
+				<SessionProvider session={session}>
+					<Component {...pageProps} />
+				</SessionProvider>
 			</MantineProvider>
 		</>
 	);
